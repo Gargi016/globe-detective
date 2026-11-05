@@ -87,4 +87,60 @@ export const SRC = {
     label: 'UN Security Council Resolution 541 (1983)',
     url: 'https://digitallibrary.un.org/record/53544',
   },
+  qingDynasty: {
+    label: 'Qing dynasty (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Qing_dynasty',
+  },
+  republicOfChina: {
+    label: 'Republic of China (1912–1949) (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Republic_of_China_(1912%E2%80%931949)',
+  },
+  peoplesRepublicOfChina: {
+    label: "People's Republic of China (Wikipedia)",
+    url: 'https://en.wikipedia.org/wiki/China',
+  },
+  ottomanEmpire: {
+    label: 'Ottoman Empire (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Ottoman_Empire',
+  },
+  republicOfTurkey: {
+    label: 'Turkey (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Turkey',
+  },
+  persiaIran: {
+    label: 'Name of Iran (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Name_of_Iran',
+  },
+  iranHistory: {
+    label: 'History of Iran (Encyclopædia Britannica)',
+    url: 'https://www.britannica.com/place/Iran',
+  },
+  congoFreeState: {
+    label: 'Congo Free State (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Congo_Free_State',
+  },
+  belgianCongo: {
+    label: 'Belgian Congo (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Belgian_Congo',
+  },
+  congoLeopoldville: {
+    label: 'Republic of the Congo (Léopoldville) (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Republic_of_the_Congo_(L%C3%A9opoldville)',
+  },
+  zaireHistory: {
+    label: 'Zaire (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Zaire',
+  },
+  drcHistory: {
+    label: 'Democratic Republic of the Congo (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Democratic_Republic_of_the_Congo',
+  },
+  upperVolta: {
+    label: 'Republic of Upper Volta (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Republic_of_Upper_Volta',
+  },
+  burkinaFaso: {
+    label: 'Burkina Faso (Wikipedia)',
+    url: 'https://en.wikipedia.org/wiki/Burkina_Faso',
+  },
 } as const satisfies Record<string, SourceRef>;

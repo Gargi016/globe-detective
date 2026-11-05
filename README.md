@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/Cloudflare_Workers-Edge_API-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare Workers">
   <img src="https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
   <img src="https://img.shields.io/badge/Netlify-Deployed-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" alt="Netlify">
-  <img src="https://img.shields.io/badge/Tests-247_Passed-brightgreen?style=for-the-badge" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-268_Passed-brightgreen?style=for-the-badge" alt="Tests">
 </p>
 
 <p align="center">
@@ -178,7 +178,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ```bash
 npm test
 ```
-Runs 247 unit, integration, and security rule tests via Vitest.
+Runs 268 unit, integration, and security rule tests via Vitest.
 
 ### 7. Production Build
 ```bash
