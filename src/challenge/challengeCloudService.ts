@@ -179,3 +179,62 @@ export async function fetchCloudChallenges(uid: string, maxItems = 100): Promise
     return [];
   }
 }
+
+/**
+ * Synchronizes any locally recorded challenge results that have not yet been submitted to the cloud.
+ * Submits each missing attempt to the Cloudflare Worker so they become verified and update the cloud leaderboards.
+ */
+export async function syncLocalChallengesToCloud(
+  uid: string,
+  localHistory: ChallengeResult[],
+): Promise<{ syncedCount: number; errorsCount: number }> {
+  if (!uid || !localHistory || localHistory.length === 0) {
+    return { syncedCount: 0, errorsCount: 0 };
+  }
+
+  try {
+    const cloudChallenges = await fetchCloudChallenges(uid);
+    const cloudMatches = new Set(cloudChallenges.map((c) => `${c.seed}_${c.guess}`));
+    const cloudDaily = new Set(cloudChallenges.filter((c) => c.daily).map((c) => c.daily as string));
+
+    let syncedCount = 0;
+    let errorsCount = 0;
+
+    // Submit in chronological order (oldest first) so streaks and timestamps accumulate correctly
+    const sorted = [...localHistory].sort((a, b) => (a.playedAt || 0) - (b.playedAt || 0));
+
+    for (const item of sorted) {
+      const matchKey = `${item.seed}_${item.guess}`;
+      if (cloudMatches.has(matchKey)) continue;
+      if (item.daily && cloudDaily.has(item.daily)) continue;
+
+      const input: SubmitChallengeInput = {
+        seed: item.seed,
+        difficulty: item.difficulty,
+        daily: item.daily,
+        refDate: item.refDate || `${item.startYear}-06-15`,
+        intervalStart: item.intervalStart || `${item.startYear}-01-01`,
+        intervalEnd: item.intervalEnd || `${item.endYear}-12-31`,
+        startYear: item.startYear,
+        endYear: item.endYear,
+        guess: item.guess,
+        hintsUsed: item.hintsUsed || 0,
+      };
+
+      const res = await submitChallengeAttempt(input, uid);
+      if (res.verified) {
+        syncedCount++;
+        cloudMatches.add(matchKey);
+        if (item.daily) cloudDaily.add(item.daily);
+      } else {
+        errorsCount++;
+      }
+    }
+
+    return { syncedCount, errorsCount };
+  } catch (err) {
+    console.warn('syncLocalChallengesToCloud failed:', err);
+    return { syncedCount: 0, errorsCount: 1 };
+  }
+}
+

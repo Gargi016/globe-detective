@@ -24,6 +24,7 @@ import { syncAchievements } from '../profile/sync';
 import { useAuth } from '../hooks/useAuth';
 import { syncCloudStats } from '../profile/userProfileService';
 import { reconcileAchievements, syncAchievementsWithCloud } from '../profile/achievementCloudService';
+import { syncLocalChallengesToCloud } from '../challenge/challengeCloudService';
 
 export default function ProfilePage() {
   const store = useMemo(() => browserStorage(), []);
@@ -78,12 +79,15 @@ export default function ProfilePage() {
     }
   }, [cloudProfile, user, store]);
 
-  // Auto-sync statistics to cloud when authenticated
+  // Auto-sync statistics and local challenges to cloud when authenticated
   useEffect(() => {
-    if (user) {
+    if (user && !isGuest) {
       void syncCloudStats(user.uid, progress, profile);
+      if (progress.history.length > 0) {
+        void syncLocalChallengesToCloud(user.uid, progress.history);
+      }
     }
-  }, [user, progress, profile]);
+  }, [user, isGuest, progress, profile]);
 
   // Synchronize unlocked achievements with cloud
   useEffect(() => {

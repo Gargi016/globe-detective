@@ -3,6 +3,9 @@ import { useAuth } from '../hooks/useAuth';
 import { fetchLeaderboard, getMonthlyPeriodKey, getWeeklyPeriodKey } from '../leaderboard/leaderboardService';
 import type { LeaderboardEntryDoc, LeaderboardPeriodType } from '../types/database';
 import { EMBLEMS } from '../profile/profileStore';
+import { browserStorage } from '../detective/investigation';
+import { loadProgress } from '../challenge/progress';
+import { syncLocalChallengesToCloud } from '../challenge/challengeCloudService';
 
 export default function LeaderboardPage() {
   const { user, isGuest, openAuthModal } = useAuth();
@@ -15,6 +18,14 @@ export default function LeaderboardPage() {
     setLoading(true);
     setError(null);
     try {
+      if (user && !isGuest) {
+        // Automatically sync any offline or guest challenges to the cloud & leaderboard
+        const store = browserStorage();
+        const localProgress = loadProgress(store);
+        if (localProgress.history.length > 0) {
+          await syncLocalChallengesToCloud(user.uid, localProgress.history);
+        }
+      }
       const data = await fetchLeaderboard(selectedPeriod);
       setEntries(data);
     } catch {
@@ -22,7 +33,7 @@ export default function LeaderboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, isGuest]);
 
   useEffect(() => {
     void loadRankings(period);

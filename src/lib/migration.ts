@@ -5,6 +5,7 @@ import { fetchCloudInvestigations, saveCloudInvestigation } from '../detective/i
 import { DEFAULT_NAME, loadProfile } from '../profile/profileStore';
 import { fetchCloudAchievements, saveCloudAchievement } from '../profile/achievementCloudService';
 import { loadProgress } from '../challenge/progress';
+import { syncLocalChallengesToCloud } from '../challenge/challengeCloudService';
 import { getCloudProfile, syncCloudStats, updateCloudProfile } from '../profile/userProfileService';
 
 export const MIGRATION_KEY_PREFIX = 'globe-detective:migrated:';
@@ -51,6 +52,7 @@ export async function migrateLocalStorageToCloud(
 
   let investigationsCount = 0;
   let achievementsCount = 0;
+  let challengesCount = 0;
   let profileMigrated = false;
 
   try {
@@ -106,17 +108,23 @@ export async function migrateLocalStorageToCloud(
       }
     }
 
-    // 4. Synchronize aggregate statistics to users/{uid}
+    // 4. Synchronize unsubmitted local challenges to the edge Worker & Leaderboard
+    if (localProgress.history.length > 0) {
+      const { syncedCount } = await syncLocalChallengesToCloud(uid, localProgress.history);
+      challengesCount = syncedCount;
+    }
+
+    // 5. Synchronize aggregate statistics to users/{uid}
     await syncCloudStats(uid, localProgress, localProfile);
 
-    // 5. Mark migration complete in local storage
+    // 6. Mark migration complete in local storage
     store.setItem(migrationKey, String(Date.now()));
 
     return {
       profileMigrated,
       investigationsCount,
       achievementsCount,
-      challengesCount: localProgress.history.length,
+      challengesCount: challengesCount > 0 ? challengesCount : localProgress.history.length,
       skipped: false,
     };
   } catch (err) {
