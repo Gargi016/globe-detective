@@ -3,17 +3,13 @@ import GlobeView from '../components/GlobeView';
 import type { GlobeViewHandle } from '../components/GlobeView';
 import CountrySearch from '../components/CountrySearch';
 import CountryPanel from '../components/CountryPanel';
-import PerspectiveToggle from '../components/PerspectiveToggle';
 import type { CountryFeature } from '../types/geo';
-import type { MapPerspective } from '../lib/countries';
 import { displayName } from '../lib/names';
 
 export interface HomePageProps {
   countries: CountryFeature[];
   selected: CountryFeature | null;
   selectedKey: string | null;
-  perspective: MapPerspective;
-  onPerspectiveChange: (p: MapPerspective) => void;
   onSelect: (country: CountryFeature) => void;
   onClear: () => void;
   onCountriesLoaded: (countries: CountryFeature[]) => void;
@@ -23,8 +19,6 @@ export default function HomePage({
   countries,
   selected,
   selectedKey,
-  perspective,
-  onPerspectiveChange,
   onSelect,
   onClear,
   onCountriesLoaded,
@@ -50,17 +44,12 @@ export default function HomePage({
           onSelect={onSelect}
           disabled={countries.length === 0}
         />
-        <PerspectiveToggle
-          perspective={perspective}
-          onChange={onPerspectiveChange}
-        />
       </section>
 
       <section className="explorer" aria-label="Interactive globe">
         <GlobeView
           ref={globeRef}
           selectedKey={selectedKey}
-          perspective={perspective}
           onSelect={onSelect}
           onCountriesLoaded={onCountriesLoaded}
         />

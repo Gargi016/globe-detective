@@ -2,49 +2,34 @@ import { feature } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 import type { CountryCollection, CountryFeature, CountryProperties } from '../types/geo';
 
-export type MapPerspective = 'india-official' | 'de-facto';
+/** Active Modern Explorer atlas URL: India's Official Territorial Perspective (Survey of India standard model) */
+export const ATLAS_URL = `${import.meta.env.BASE_URL}data/countries-110m-soi.json`;
+export const ATLAS_SOI_URL = ATLAS_URL;
 
-export const ATLAS_SOI_URL = `${import.meta.env.BASE_URL}data/countries-110m-soi.json`;
-export const ATLAS_DE_FACTO_URL = `${import.meta.env.BASE_URL}data/countries-110m.json`;
-/** Default modern atlas URL: India's Official Territorial Perspective (Survey of India standard) */
-export const ATLAS_URL = ATLAS_SOI_URL;
+/** Preserved archival reference URL (retained for baseline reference; not loaded by the public app) */
+export const ATLAS_ARCHIVAL_DE_FACTO_URL = `${import.meta.env.BASE_URL}data/countries-110m.json`;
+export const ATLAS_DE_FACTO_URL = ATLAS_ARCHIVAL_DE_FACTO_URL;
 
-let cacheDeFacto: Promise<CountryFeature[]> | null = null;
-let cacheSoi: Promise<CountryFeature[]> | null = null;
+let cache: Promise<CountryFeature[]> | null = null;
 
 /**
- * Loads modern country polygons from world-atlas.
- * Defaults to India's Official Territorial Perspective (Survey of India standard).
+ * Loads modern country polygons representing India's Official Territorial Perspective.
  * The result is cached for the lifetime of the page so remounting the globe does not refetch.
  * A failed request is not cached, so retrying really retries.
  */
-export function loadCountries(
-  perspective: MapPerspective | 'india-claimed' = 'india-official',
-): Promise<CountryFeature[]> {
-  if (perspective === 'de-facto') {
-    if (!cacheDeFacto) {
-      cacheDeFacto = fetchCountries(ATLAS_DE_FACTO_URL).catch((err: unknown) => {
-        cacheDeFacto = null;
-        throw err;
-      });
-    }
-    return cacheDeFacto;
-  }
-
-  // Default: 'india-official' (and legacy alias 'india-claimed')
-  if (!cacheSoi) {
-    cacheSoi = fetchCountries(ATLAS_SOI_URL).catch((err: unknown) => {
-      cacheSoi = null;
+export function loadCountries(): Promise<CountryFeature[]> {
+  if (!cache) {
+    cache = fetchCountries(ATLAS_URL).catch((err: unknown) => {
+      cache = null;
       throw err;
     });
   }
-  return cacheSoi;
+  return cache;
 }
 
-/** Reset in-memory caches for testing purposes. */
+/** Reset in-memory cache for testing purposes. */
 export function clearCountriesCacheForTests(): void {
-  cacheDeFacto = null;
-  cacheSoi = null;
+  cache = null;
 }
 
 async function fetchCountries(url: string): Promise<CountryFeature[]> {

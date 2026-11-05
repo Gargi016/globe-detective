@@ -16,7 +16,6 @@ import AuthModal from './components/auth/AuthModal';
 import { useHashRoute } from './hooks/useHashRoute';
 import type { ResolvedRoute } from './hooks/useHashRoute';
 import { countryKey } from './lib/countries';
-import type { MapPerspective } from './lib/countries';
 import type { CountryFeature } from './types/geo';
 
 const TITLES: Record<ResolvedRoute, string> = {
@@ -43,7 +42,6 @@ function AppContent() {
   const route = useHashRoute();
   const [countries, setCountries] = useState<CountryFeature[]>([]);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [perspective, setPerspective] = useState<MapPerspective>('india-official');
 
   const selected = useMemo(
     () => (selectedKey ? (countries.find((c) => countryKey(c) === selectedKey) ?? null) : null),
@@ -102,8 +100,6 @@ function AppContent() {
                 countries={countries}
                 selected={selected}
                 selectedKey={selectedKey}
-                perspective={perspective}
-                onPerspectiveChange={setPerspective}
                 onSelect={handleSelect}
                 onClear={handleClear}
                 onCountriesLoaded={setCountries}
@@ -135,9 +131,7 @@ function AppContent() {
           route === 'profile' ||
           route === 'leaderboard'
             ? 'Historical borders: CShapes 2.0 · Schvitz et al. 2022 · CC BY-NC-SA 4.0 (non-commercial)'
-            : perspective === 'india-official'
-            ? "Modern borders: India's Official Territorial Perspective (Survey of India standard model) · Natural Earth & CShapes derivative (CC BY-NC-SA 4.0)"
-            : 'Modern borders: De Facto Administration (Actual Control) · Natural Earth baseline'}
+            : "Modern borders: India's Official Territorial Perspective (Survey of India standard model) · Natural Earth & CShapes derivative (CC BY-NC-SA 4.0)"}
           {' · '}
           <a href="#/about">Data sources and licences</a>
         </span>

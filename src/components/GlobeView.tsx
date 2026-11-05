@@ -5,7 +5,6 @@ import { MeshPhongMaterial } from 'three';
 import type { GlobeMethods } from 'react-globe.gl';
 import type { CountryFeature } from '../types/geo';
 import { countryKey, loadCountries } from '../lib/countries';
-import type { MapPerspective } from '../lib/countries';
 import { analyzeCountry } from '../lib/geo';
 import type { PolygonFeature } from '../lib/geo';
 import { EARTH_BUMP_URL, EARTH_TEXTURE_URL } from '../lib/config';
@@ -72,8 +71,6 @@ export interface GlobeViewProps<F extends PolygonFeature = CountryFeature> {
   tooltipOf?: (f: F) => string;
   /** Cap colour of a polygon. Defaults to the Phase 2 blue/gold scheme. */
   polygonColor?: (f: F, state: PolygonVisualState) => string;
-  /** Map perspective when loading built-in modern borders ('india-official' or 'de-facto'). Defaults to 'india-official'. */
-  perspective?: MapPerspective;
   /** Content layered over the globe, e.g. a "no coverage" notice. */
   overlay?: ReactNode;
   /** Replaces the hint line under the globe. */
@@ -90,7 +87,6 @@ export default function GlobeView<F extends PolygonFeature = CountryFeature>({
   keyOf,
   tooltipOf,
   polygonColor,
-  perspective = 'india-official',
   overlay,
   hint = 'Drag to rotate · Scroll or pinch to zoom · Click a country',
   ref,
@@ -149,7 +145,7 @@ export default function GlobeView<F extends PolygonFeature = CountryFeature>({
     if (external) return;
     let cancelled = false;
     setData({ status: 'loading' });
-    loadCountries(perspective)
+    loadCountries()
       .then((countries) => {
         if (cancelled) return;
         setData({ status: 'ready', countries });
@@ -165,7 +161,7 @@ export default function GlobeView<F extends PolygonFeature = CountryFeature>({
     return () => {
       cancelled = true;
     };
-  }, [reloadKey, external, perspective]);
+  }, [reloadKey, external]);
 
   // Camera + orbit controls, applied once the globe instance exists. Idempotent: it runs from
   // onGlobeReady and from a frame loop below, whichever gets there first.

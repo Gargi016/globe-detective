@@ -190,10 +190,18 @@ describe('Two-Perspective Territorial Map System', () => {
   });
 
   describe('4. Atlas Module & Loader Configurations', () => {
-    it('configures India Official Perspective as the default modern atlas endpoint', () => {
-      expect(ATLAS_DE_FACTO_URL).toMatch(/countries-110m\.json$/);
+    it('configures India Official Perspective as the sole active modern atlas endpoint', () => {
       expect(ATLAS_SOI_URL).toMatch(/countries-110m-soi\.json$/);
       expect(ATLAS_URL).toBe(ATLAS_SOI_URL);
+      // Preserves original baseline for archival reference
+      expect(ATLAS_DE_FACTO_URL).toMatch(/countries-110m\.json$/);
+    });
+
+    it('preserves both datasets without modification or overwriting', () => {
+      expect(fs.existsSync(deFactoPath)).toBe(true);
+      expect(fs.existsSync(soiPath)).toBe(true);
+      expect(deFactoFeatures.length).toBe(177);
+      expect(soiFeatures.length).toBe(177);
     });
   });
 });
