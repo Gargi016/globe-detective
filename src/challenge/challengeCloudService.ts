@@ -268,3 +268,53 @@ export async function syncLocalChallengesToCloud(
   }
 }
 
+/**
+ * Calls the Cloudflare Worker reconcile endpoint to recalculate and sync
+ * the user's total points and challenges played on the Leaderboard.
+ */
+export async function reconcileCloudLeaderboard(
+  _uid: string,
+  claimedPoints?: number,
+  claimedPlayed?: number,
+): Promise<{ success: boolean; points?: number; challengesPlayed?: number; error?: string }> {
+  const workerApiUrl = (import.meta.env.VITE_WORKER_API_URL as string | undefined)?.trim();
+  if (!workerApiUrl || !auth) {
+    return { success: false, error: 'Worker API URL or Firebase Auth not configured.' };
+  }
+
+  if (typeof auth.authStateReady === 'function') {
+    try {
+      await auth.authStateReady();
+    } catch {
+      // ignore
+    }
+  }
+
+  if (!auth.currentUser) {
+    return { success: false, error: 'User is not signed in.' };
+  }
+
+  try {
+    const idToken = await auth.currentUser.getIdToken();
+    const res = await fetch(`${workerApiUrl.replace(/\/+$/, '')}/api/challenge/reconcile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({ claimedPoints, claimedPlayed }),
+    });
+
+    if (res.ok) {
+      const data = (await res.json()) as { success?: boolean; points?: number; challengesPlayed?: number };
+      return { success: true, points: data.points, challengesPlayed: data.challengesPlayed };
+    } else {
+      const err = (await res.json().catch(() => ({}))) as { error?: string };
+      return { success: false, error: err.error || `HTTP ${res.status}` };
+    }
+  } catch (err) {
+    return { success: false, error: (err as Error).message };
+  }
+}
+
+

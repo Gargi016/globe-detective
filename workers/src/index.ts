@@ -1,5 +1,5 @@
 import { verifyFirebaseIdToken } from './auth';
-import { executeAtomicChallengeCommit } from './firestore';
+import { executeAtomicChallengeCommit, reconcileUserLeaderboard } from './firestore';
 import { calculateScore, getMonthlyPeriodKey, getWeeklyPeriodKey } from './scoring';
 
 export interface Env {
@@ -160,6 +160,46 @@ export default {
         }
         console.error('Worker submission error:', message);
         return jsonResponse({ error: `Server error processing challenge: ${message}` }, 500);
+      }
+    }
+
+    // Reconcile challenge scores & leaderboard endpoint
+    if (url.pathname === '/api/challenge/reconcile' && request.method === 'POST') {
+      try {
+        const authHeader = request.headers.get('Authorization') || '';
+        const match = authHeader.match(/^Bearer\s+(.+)$/);
+        if (!match) {
+          return jsonResponse({ error: 'Missing Authorization header.' }, 401);
+        }
+
+        const idToken = match[1];
+        const decodedToken = await verifyFirebaseIdToken(idToken, env.FIREBASE_PROJECT_ID);
+        const uid = decodedToken.uid;
+        const body = (await request.json().catch(() => ({}))) as { claimedPoints?: number; claimedPlayed?: number };
+
+        const now = Date.now();
+        const nowDate = new Date(now);
+        const weekKey = getWeeklyPeriodKey(nowDate);
+        const monthKey = getMonthlyPeriodKey(nowDate);
+
+        const result = await reconcileUserLeaderboard({
+          creds: {
+            projectId: env.FIREBASE_PROJECT_ID,
+            clientEmail: env.FIREBASE_CLIENT_EMAIL,
+            privateKeyPem: env.FIREBASE_PRIVATE_KEY,
+          },
+          uid,
+          claimedPoints: typeof body.claimedPoints === 'number' ? body.claimedPoints : undefined,
+          claimedPlayed: typeof body.claimedPlayed === 'number' ? body.claimedPlayed : undefined,
+          weekKey,
+          monthKey,
+        });
+
+        return jsonResponse({ success: true, ...result });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error('Reconciliation error:', message);
+        return jsonResponse({ error: `Reconciliation failed: ${message}` }, 500);
       }
     }
 

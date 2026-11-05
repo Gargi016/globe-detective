@@ -216,7 +216,7 @@ export async function executeAtomicChallengeCommit(params: AtomicChallengeCommit
   // 2. Read inside transaction to prevent replay and fetch stats
   let userFields: Record<string, unknown> = {};
 
-  const userDocUrl = `${baseApi}/users/${uid}?transaction=${transaction}`;
+  const userDocUrl = `${baseApi}/users/${uid}?transaction=${encodeURIComponent(transaction)}`;
   const userRes = await fetch(userDocUrl, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -224,17 +224,39 @@ export async function executeAtomicChallengeCommit(params: AtomicChallengeCommit
   if (userRes.ok) {
     const rawUser = (await userRes.json()) as { fields?: Record<string, FirestoreValue> };
     userFields = rawUser.fields ? fromFirestoreFields(rawUser.fields) : {};
+  } else {
+    // Fallback read outside transaction if transactional read failed
+    const directRes = await fetch(`${baseApi}/users/${uid}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (directRes.ok) {
+      const rawUser = (await directRes.json()) as { fields?: Record<string, FirestoreValue> };
+      userFields = rawUser.fields ? fromFirestoreFields(rawUser.fields) : {};
+    }
   }
 
   // Check duplicate daily submission inside transaction
   if (dailyKey) {
-    const dailyDocUrl = `${baseApi}/users/${uid}/dailyDone/${dailyKey}?transaction=${transaction}`;
+    const dailyDocUrl = `${baseApi}/users/${uid}/dailyDone/${dailyKey}?transaction=${encodeURIComponent(transaction)}`;
     const dailyRes = await fetch(dailyDocUrl, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (dailyRes.ok) {
       throw new Error('DUPLICATE_DAILY_CHALLENGE: Daily challenge already completed for this date.');
     }
+  }
+
+  // Check existing leaderboard entry as backup to prevent point regression
+  const lbRes = await fetch(`${baseApi}/leaderboards/global/entries/${uid}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  let currentBoardPoints = 0;
+  let currentBoardPlayed = 0;
+  if (lbRes.ok) {
+    const rawLb = (await lbRes.json()) as { fields?: Record<string, FirestoreValue> };
+    const lbFields = rawLb.fields ? fromFirestoreFields(rawLb.fields) : {};
+    if (typeof lbFields.points === 'number') currentBoardPoints = lbFields.points;
+    if (typeof lbFields.challengesPlayed === 'number') currentBoardPlayed = lbFields.challengesPlayed;
   }
 
   // Calculate updated user stats
@@ -248,8 +270,10 @@ export async function executeAtomicChallengeCommit(params: AtomicChallengeCommit
   const isGood = scoredPoints >= 80;
   const newCurrentStreak = isGood ? (existingStats.currentStreak || 0) + 1 : 0;
   const newBestStreak = Math.max(existingStats.bestStreak || 0, newCurrentStreak);
-  const newTotalPoints = (existingStats.totalPoints || 0) + scoredPoints;
-  const newChallengesPlayed = (existingStats.challengesPlayed || 0) + 1;
+  const basePoints = Math.max(existingStats.totalPoints || 0, currentBoardPoints);
+  const basePlayed = Math.max(existingStats.challengesPlayed || 0, currentBoardPlayed);
+  const newTotalPoints = basePoints + scoredPoints;
+  const newChallengesPlayed = basePlayed + 1;
 
   const username = String(userFields.username || `detective_${uid.slice(0, 6)}`).slice(0, 20);
   const displayName = String(userFields.displayName || 'Anonymous Detective').slice(0, 30);
@@ -355,3 +379,143 @@ export async function executeAtomicChallengeCommit(params: AtomicChallengeCommit
     newBestStreak,
   };
 }
+
+export interface ReconcileParams {
+  creds: ServiceAccountCredentials;
+  uid: string;
+  claimedPoints?: number;
+  claimedPlayed?: number;
+  weekKey: string;
+  monthKey: string;
+}
+
+/**
+ * Reconciles a user's total points and challenges played across Firestore and Leaderboards.
+ * Reads all verified challenges in `users/{uid}/challenges`, calculates the true total, and updates the leaderboards.
+ */
+export async function reconcileUserLeaderboard(params: ReconcileParams) {
+  const { creds, uid, claimedPoints, claimedPlayed, weekKey, monthKey } = params;
+  const projectId = cleanSecret(creds.projectId);
+  const token = await getGoogleAccessToken(creds);
+  const baseApi = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+  const docRoot = `projects/${projectId}/databases/(default)/documents`;
+
+  // 1. Fetch user doc
+  let userFields: Record<string, unknown> = {};
+  const userRes = await fetch(`${baseApi}/users/${uid}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (userRes.ok) {
+    const rawUser = (await userRes.json()) as { fields?: Record<string, FirestoreValue> };
+    userFields = rawUser.fields ? fromFirestoreFields(rawUser.fields) : {};
+  }
+
+  // 2. Fetch all challenges for user
+  let totalChallengePoints = 0;
+  let totalChallengeCount = 0;
+  let bestStreak = 0;
+  let currentStreak = 0;
+
+  const challengesRes = await fetch(`${baseApi}/users/${uid}/challenges?pageSize=100`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (challengesRes.ok) {
+    const data = (await challengesRes.json()) as { documents?: { fields?: Record<string, FirestoreValue> }[] };
+    if (data.documents) {
+      for (const doc of data.documents) {
+        if (doc.fields) {
+          const f = fromFirestoreFields(doc.fields);
+          if (typeof f.points === 'number') {
+            totalChallengePoints += f.points;
+            totalChallengeCount++;
+            if (f.points >= 80) {
+              currentStreak++;
+              bestStreak = Math.max(bestStreak, currentStreak);
+            } else {
+              currentStreak = 0;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const existingStats = (userFields.stats as Record<string, number> | undefined) || {};
+  const finalPoints = Math.max(totalChallengePoints, claimedPoints || 0, existingStats.totalPoints || 0);
+  const finalPlayed = Math.max(totalChallengeCount, claimedPlayed || 0, existingStats.challengesPlayed || 0);
+  const finalBestStreak = Math.max(bestStreak, existingStats.bestStreak || 0);
+
+  const username = String(userFields.username || `detective_${uid.slice(0, 6)}`).slice(0, 20);
+  const displayName = String(userFields.displayName || 'Anonymous Detective').slice(0, 30);
+  const emblem = ['compass', 'globe', 'lens', 'quill', 'anchor', 'star'].includes(userFields.emblem as string)
+    ? userFields.emblem
+    : 'compass';
+
+  const updatedUserDoc = {
+    ...userFields,
+    stats: {
+      ...existingStats,
+      totalPoints: finalPoints,
+      challengesPlayed: finalPlayed,
+      bestStreak: finalBestStreak,
+    },
+    updatedAt: Date.now(),
+  };
+
+  const leaderboardPayload = (periodStr: string) => ({
+    uid,
+    username,
+    displayName,
+    emblem,
+    points: finalPoints,
+    challengesPlayed: finalPlayed,
+    bestStreak: finalBestStreak,
+    period: periodStr,
+    updatedAt: Date.now(),
+  });
+
+  const writes = [
+    {
+      update: {
+        name: `${docRoot}/users/${uid}`,
+        fields: toFirestoreFields(updatedUserDoc),
+      },
+    },
+    {
+      update: {
+        name: `${docRoot}/leaderboards/global/entries/${uid}`,
+        fields: toFirestoreFields(leaderboardPayload('global')),
+      },
+    },
+    {
+      update: {
+        name: `${docRoot}/leaderboards/weekly/periods/${weekKey}/entries/${uid}`,
+        fields: toFirestoreFields(leaderboardPayload(weekKey)),
+      },
+    },
+    {
+      update: {
+        name: `${docRoot}/leaderboards/monthly/periods/${monthKey}/entries/${uid}`,
+        fields: toFirestoreFields(leaderboardPayload(monthKey)),
+      },
+    },
+  ];
+
+  const commitRes = await fetch(`${baseApi}:commit`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ writes }),
+  });
+
+  if (!commitRes.ok) {
+    const errText = await commitRes.text();
+    throw new Error(`Reconciliation commit failed: HTTP ${commitRes.status} - ${errText}`);
+  }
+
+  return { points: finalPoints, challengesPlayed: finalPlayed };
+}
+

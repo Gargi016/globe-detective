@@ -5,7 +5,7 @@ import type { LeaderboardEntryDoc, LeaderboardPeriodType } from '../types/databa
 import { EMBLEMS } from '../profile/profileStore';
 import { browserStorage } from '../detective/investigation';
 import { loadProgress } from '../challenge/progress';
-import { syncLocalChallengesToCloud } from '../challenge/challengeCloudService';
+import { reconcileCloudLeaderboard, syncLocalChallengesToCloud } from '../challenge/challengeCloudService';
 
 export default function LeaderboardPage() {
   const { user, isGuest, openAuthModal } = useAuth();
@@ -29,6 +29,7 @@ export default function LeaderboardPage() {
         const currentProgress = loadProgress(store);
         if (currentProgress.history.length > 0) {
           await syncLocalChallengesToCloud(user.uid, currentProgress.history);
+          await reconcileCloudLeaderboard(user.uid, currentProgress.stats.totalPoints, currentProgress.stats.played);
         }
       }
       const data = await fetchLeaderboard(selectedPeriod);
@@ -55,24 +56,21 @@ export default function LeaderboardPage() {
     setSyncStatus(null);
     try {
       const currentProgress = loadProgress(store);
-      const res = await syncLocalChallengesToCloud(user.uid, currentProgress.history);
-      if (res.syncedCount > 0) {
+      // 1. Submit any missing attempts
+      await syncLocalChallengesToCloud(user.uid, currentProgress.history);
+      // 2. Reconcile leaderboard entry with full points
+      const rec = await reconcileCloudLeaderboard(user.uid, currentProgress.stats.totalPoints, currentProgress.stats.played);
+      if (rec.success) {
         setSyncStatus({
           type: 'ok',
-          message: `Successfully verified and synced ${res.syncedCount} challenge${res.syncedCount === 1 ? '' : 's'}!`,
+          message: `Successfully verified and synced! Leaderboard updated to ${rec.points ?? localPoints} pts.`,
         });
         await loadRankings(period);
-      } else if (res.errorsCount > 0) {
-        setSyncStatus({
-          type: 'error',
-          message: res.lastError ? `Sync issue: ${res.lastError}` : 'Some challenges could not be verified by the edge server.',
-        });
       } else {
         setSyncStatus({
-          type: 'ok',
-          message: 'All local challenges are already verified and synchronized.',
+          type: 'error',
+          message: rec.error ? `Sync issue: ${rec.error}` : 'Could not synchronize. Please try again.',
         });
-        await loadRankings(period);
       }
     } catch (err) {
       setSyncStatus({
