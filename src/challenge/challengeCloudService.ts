@@ -25,6 +25,7 @@ export interface SubmitChallengeResult {
   attemptId: string;
   verified: boolean;
   score: GuessScore;
+  lastError?: string;
 }
 
 /**
@@ -47,6 +48,15 @@ export async function submitChallengeAttempt(
       verified: false,
       score: localScore,
     };
+  }
+
+  // Ensure Firebase auth state is fully loaded
+  if (auth && typeof auth.authStateReady === 'function') {
+    try {
+      await auth.authStateReady();
+    } catch {
+      // Ignore auth ready errors
+    }
   }
 
   // 1. Primary Strategy: Cloudflare Worker endpoint (Free Tier)
@@ -89,7 +99,14 @@ export async function submitChallengeAttempt(
         }
       } else {
         const errJson = (await res.json().catch(() => ({}))) as { error?: string };
-        console.error(`Worker challenge submission error (HTTP ${res.status}):`, errJson.error || errJson);
+        const errorMsg = errJson.error || `HTTP ${res.status}`;
+        console.error(`Worker challenge submission error: ${errorMsg}`);
+        return {
+          attemptId: localAttemptId,
+          verified: false,
+          score: localScore,
+          lastError: errorMsg,
+        };
       }
     } catch (workerErr) {
       console.warn('Cloudflare Worker request failed; falling back to Firebase function or local:', workerErr);
@@ -187,9 +204,18 @@ export async function fetchCloudChallenges(uid: string, maxItems = 100): Promise
 export async function syncLocalChallengesToCloud(
   uid: string,
   localHistory: ChallengeResult[],
-): Promise<{ syncedCount: number; errorsCount: number }> {
+): Promise<{ syncedCount: number; errorsCount: number; lastError?: string }> {
   if (!uid || !localHistory || localHistory.length === 0) {
     return { syncedCount: 0, errorsCount: 0 };
+  }
+
+  // Ensure Firebase auth is fully ready
+  if (auth && typeof auth.authStateReady === 'function') {
+    try {
+      await auth.authStateReady();
+    } catch {
+      // ignore
+    }
   }
 
   try {
@@ -199,6 +225,7 @@ export async function syncLocalChallengesToCloud(
 
     let syncedCount = 0;
     let errorsCount = 0;
+    let lastError: string | undefined;
 
     // Submit in chronological order (oldest first) so streaks and timestamps accumulate correctly
     const sorted = [...localHistory].sort((a, b) => (a.playedAt || 0) - (b.playedAt || 0));
@@ -228,13 +255,16 @@ export async function syncLocalChallengesToCloud(
         if (item.daily) cloudDaily.add(item.daily);
       } else {
         errorsCount++;
+        if (res.lastError) {
+          lastError = res.lastError;
+        }
       }
     }
 
-    return { syncedCount, errorsCount };
+    return { syncedCount, errorsCount, lastError };
   } catch (err) {
     console.warn('syncLocalChallengesToCloud failed:', err);
-    return { syncedCount: 0, errorsCount: 1 };
+    return { syncedCount: 0, errorsCount: 1, lastError: (err as Error).message };
   }
 }
 

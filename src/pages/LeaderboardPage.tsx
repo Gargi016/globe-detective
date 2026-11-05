@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { fetchLeaderboard, getMonthlyPeriodKey, getWeeklyPeriodKey } from '../leaderboard/leaderboardService';
 import type { LeaderboardEntryDoc, LeaderboardPeriodType } from '../types/database';
@@ -14,16 +14,21 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<{ type: 'ok' | 'error'; message: string } | null>(null);
+
+  const store = useMemo(() => browserStorage(), []);
+  const localProgress = useMemo(() => loadProgress(store), [store]);
+
   const loadRankings = useCallback(async (selectedPeriod: LeaderboardPeriodType) => {
     setLoading(true);
     setError(null);
     try {
       if (user && !isGuest) {
         // Automatically sync any offline or guest challenges to the cloud & leaderboard
-        const store = browserStorage();
-        const localProgress = loadProgress(store);
-        if (localProgress.history.length > 0) {
-          await syncLocalChallengesToCloud(user.uid, localProgress.history);
+        const currentProgress = loadProgress(store);
+        if (currentProgress.history.length > 0) {
+          await syncLocalChallengesToCloud(user.uid, currentProgress.history);
         }
       }
       const data = await fetchLeaderboard(selectedPeriod);
@@ -33,11 +38,51 @@ export default function LeaderboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [user, isGuest]);
+  }, [user, isGuest, store]);
 
   useEffect(() => {
     void loadRankings(period);
   }, [period, loadRankings]);
+
+  const myEntry = useMemo(() => entries.find((e) => e.uid === user?.uid), [entries, user]);
+  const localPoints = localProgress.stats.totalPoints;
+  const cloudPoints = myEntry?.points ?? 0;
+  const hasUnsyncedPoints = !isGuest && user && localPoints > cloudPoints;
+
+  const handleManualSync = async () => {
+    if (!user) return;
+    setSyncing(true);
+    setSyncStatus(null);
+    try {
+      const currentProgress = loadProgress(store);
+      const res = await syncLocalChallengesToCloud(user.uid, currentProgress.history);
+      if (res.syncedCount > 0) {
+        setSyncStatus({
+          type: 'ok',
+          message: `Successfully verified and synced ${res.syncedCount} challenge${res.syncedCount === 1 ? '' : 's'}!`,
+        });
+        await loadRankings(period);
+      } else if (res.errorsCount > 0) {
+        setSyncStatus({
+          type: 'error',
+          message: res.lastError ? `Sync issue: ${res.lastError}` : 'Some challenges could not be verified by the edge server.',
+        });
+      } else {
+        setSyncStatus({
+          type: 'ok',
+          message: 'All local challenges are already verified and synchronized.',
+        });
+        await loadRankings(period);
+      }
+    } catch (err) {
+      setSyncStatus({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'An error occurred during synchronization.',
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const currentPeriodSubtitle =
     period === 'global'
@@ -68,6 +113,27 @@ export default function LeaderboardPage() {
             onClick={() => openAuthModal('signin')}
           >
             Sign in to Compete
+          </button>
+        </div>
+      )}
+
+      {hasUnsyncedPoints && (
+        <div className="notice notice--ok" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+          <div>
+            <strong>Local Scores Ready to Sync:</strong> You have <strong>{localPoints} pts ({localProgress.stats.played} challenges)</strong> on this device, but only <strong>{cloudPoints} pts</strong> are recorded on the cloud leaderboard.
+            {syncStatus && (
+              <div style={{ marginTop: '0.25rem', color: syncStatus.type === 'error' ? 'var(--red, #f87171)' : 'var(--green, #4ade80)' }}>
+                {syncStatus.message}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            className="btn btn--small btn--primary"
+            disabled={syncing}
+            onClick={() => void handleManualSync()}
+          >
+            {syncing ? 'Verifying with Edge…' : `Sync ${localPoints - cloudPoints} pts to Leaderboard`}
           </button>
         </div>
       )}
