@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/Cloudflare_Workers-Edge_API-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare Workers">
   <img src="https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
   <img src="https://img.shields.io/badge/Netlify-Deployed-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" alt="Netlify">
-  <img src="https://img.shields.io/badge/Tests-268_Passed-brightgreen?style=for-the-badge" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-276_Passed-brightgreen?style=for-the-badge" alt="Tests">
 </p>
 
 <p align="center">
@@ -74,6 +74,7 @@ Globe Detective relies on **CShapes 2.0** as its peer-reviewed historical baseli
 | **Palestine / Occupied Territories** | `GW 666` (Israel) | Post-1967 borders aggregate the West Bank, Gaza, and Golan Heights into Israel; notes UN SC Res 242/497/2334 and UN GA Res 67/19 recognizing the State of Palestine. | UNSC Res 242, UN GA Res 67/19 |
 | **Western Sahara** | `GW 600` (Morocco) | Entire area aggregated into Morocco post-1975/1979; notes UN Non-Self-Governing Territory status, MINURSO, and Polisario Front's SADR Free Zone east of the Berm. | UN MINURSO, Madrid Accords |
 | **Cyprus** | `GW 352` (Cyprus) | Coded as undivided island; notes 1974 de facto partition, the self-declared TRNC (1983), UNSC Res 541, the UN Buffer Zone (Green Line), and British SBAs. | UNSC Res 541 (1983) |
+| **Tawang (Indo-Bhutan Border)** | `ISO 356` (India) / `ISO 064` (Bhutan) | Geometry corrected along shared Arc 399 in `countries-110m.json`, eliminating a Douglas–Peucker simplification artifact that inadvertently enclosed Tawang (`[91.87°E, 27.59°N]`) in Bhutan. Restores exact alignment with CShapes 2.0. | McMahon Line (1914), Survey of India |
 
 ---
 
@@ -178,7 +179,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ```bash
 npm test
 ```
-Runs 268 unit, integration, and security rule tests via Vitest.
+Runs 276 unit, integration, and security rule tests via Vitest.
 
 ### 7. Production Build
 ```bash
