@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Gargi016/globe-detective/main/docs/images/project-banner.png" alt="Globe Detective Project Banner" width="100%">
+</p>
+
 <h1 align="center">🕵️‍♂️ Globe Detective</h1>
 <p align="center">
   <i>An interactive 3D cartographic investigation system to explore, date, and analyze vintage world globes.</i>
