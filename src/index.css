@@ -1889,6 +1889,51 @@ code {
   background: repeating-linear-gradient(45deg, rgba(154, 166, 191, 0.5) 0 2px, transparent 2px 4px);
 }
 
+.legend__swatch--india-overlay {
+  background: #f59e0b;
+  border: 1px dashed rgba(255, 255, 255, 0.9);
+}
+
+.legend__toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-size: 0.74rem;
+  color: var(--text);
+  background: transparent;
+  border: 1px solid var(--gold-faint);
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.legend__toggle-btn:hover {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: #f59e0b;
+}
+
+.legend__toggle-btn.is-active {
+  color: var(--gold-bright);
+  border-color: rgba(245, 158, 11, 0.6);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.legend__status-tag {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.05rem 0.28rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-dim);
+}
+
+.legend__toggle-btn.is-active .legend__status-tag {
+  background: #f59e0b;
+  color: var(--navy-900);
+}
+
 .legend__count {
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;

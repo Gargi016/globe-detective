@@ -46,3 +46,14 @@ async function fetchCountries(url: string): Promise<CountryFeature[]> {
 export function countryKey(f: CountryFeature): string {
   return f.id !== undefined && f.id !== null && f.id !== '' ? `id:${f.id}` : `name:${f.properties?.name}`;
 }
+
+/**
+ * Loads the outer boundary coordinate ring [lng, lat][] of India's Official Territorial Perspective.
+ * Reuses the cached modern atlas promise.
+ */
+export async function loadIndiaOfficialBoundary(): Promise<[number, number][]> {
+  const countries = await loadCountries();
+  const india = countries.find((c) => c.id === '356');
+  if (!india || india.geometry.type !== 'Polygon') return [];
+  return (india.geometry as unknown as { coordinates: [number, number][][] }).coordinates[0];
+}

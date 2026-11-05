@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { feature } from 'topojson-client';
@@ -6,7 +6,13 @@ import { geoContains, geoArea } from 'd3-geo';
 import type { Topology, GeometryCollection } from 'topojson-specification';
 import type { CountryProperties } from '../../types/geo';
 import { createHistoryService } from '../../history/historyService';
-import { ATLAS_DE_FACTO_URL, ATLAS_SOI_URL, ATLAS_URL } from '../countries';
+import {
+  ATLAS_DE_FACTO_URL,
+  ATLAS_SOI_URL,
+  ATLAS_URL,
+  clearCountriesCacheForTests,
+  loadIndiaOfficialBoundary,
+} from '../countries';
 
 describe('Two-Perspective Territorial Map System', () => {
   const deFactoPath = path.resolve(__dirname, '../../../public/data/countries-110m.json');
@@ -202,6 +208,46 @@ describe('Two-Perspective Territorial Map System', () => {
       expect(fs.existsSync(soiPath)).toBe(true);
       expect(deFactoFeatures.length).toBe(177);
       expect(soiFeatures.length).toBe(177);
+    });
+  });
+
+  describe('5. Historical Timeline Geographic Overlay Verification', () => {
+    beforeEach(() => {
+      clearCountriesCacheForTests();
+    });
+
+    it('loads India official boundary coordinates enclosing PoK, Gilgit-Baltistan, Aksai Chin, and Arunachal Pradesh', async () => {
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = async () =>
+        ({
+          ok: true,
+          json: async () => soiTopo,
+        }) as Response;
+
+      try {
+        const coords = await loadIndiaOfficialBoundary();
+        expect(coords.length).toBe(200);
+        expect(coords[0]).toEqual(coords[coords.length - 1]); // closed polygon ring
+
+        const indiaPolygon = {
+          type: 'Feature' as const,
+          geometry: {
+            type: 'Polygon' as const,
+            coordinates: [coords],
+          },
+          properties: {},
+        };
+
+        expect(geoContains(indiaPolygon, [73.4708, 34.37])).toBe(true); // Muzaffarabad (PoK)
+        expect(geoContains(indiaPolygon, [74.3142, 35.9208])).toBe(true); // Gilgit (Gilgit-Baltistan)
+        expect(geoContains(indiaPolygon, [76.5133, 35.8814])).toBe(true); // K2
+        expect(geoContains(indiaPolygon, [77.1, 35.5])).toBe(true); // Siachen Glacier
+        expect(geoContains(indiaPolygon, [79.0, 35.2])).toBe(true); // Aksai Chin
+        expect(geoContains(indiaPolygon, [91.87, 27.59])).toBe(true); // Tawang (Arunachal Pradesh)
+        expect(geoContains(indiaPolygon, [93.6053, 27.0844])).toBe(true); // Itanagar (Arunachal Pradesh)
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
     });
   });
 });

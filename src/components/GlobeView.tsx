@@ -50,6 +50,18 @@ export interface GlobeViewHandle {
 /** What the pointer is doing to a polygon, passed to custom colour functions. */
 export type PolygonVisualState = 'selected' | 'hovered' | 'normal';
 
+/** A 3D path / boundary line overlay rendered above the globe surface. */
+export interface GlobePathOverlay {
+  id: string;
+  coords: [number, number][]; // [lng, lat]
+  color?: string;
+  stroke?: number;
+  altitude?: number;
+  dashLength?: number;
+  dashGap?: number;
+  label?: string;
+}
+
 /**
  * Without `polygons`, the globe loads and shows the modern Natural Earth borders itself (Phase 2
  * behaviour). With `polygons` (e.g. a historical snapshot), it shows exactly those and never
@@ -71,6 +83,8 @@ export interface GlobeViewProps<F extends PolygonFeature = CountryFeature> {
   tooltipOf?: (f: F) => string;
   /** Cap colour of a polygon. Defaults to the Phase 2 blue/gold scheme. */
   polygonColor?: (f: F, state: PolygonVisualState) => string;
+  /** Geographic path/boundary overlays rendered over the globe. */
+  paths?: readonly GlobePathOverlay[];
   /** Content layered over the globe, e.g. a "no coverage" notice. */
   overlay?: ReactNode;
   /** Replaces the hint line under the globe. */
@@ -87,6 +101,7 @@ export default function GlobeView<F extends PolygonFeature = CountryFeature>({
   keyOf,
   tooltipOf,
   polygonColor,
+  paths = [],
   overlay,
   hint = 'Drag to rotate · Scroll or pinch to zoom · Click a country',
   ref,
@@ -376,6 +391,17 @@ export default function GlobeView<F extends PolygonFeature = CountryFeature>({
           polygonLabel={labelOf}
           onPolygonHover={(d) => setHoveredKey(d ? getKey(d) : null)}
           onPolygonClick={(d) => onSelect?.(d as F)}
+          pathsData={paths as object[]}
+          pathPoints={(d: object) => (d as GlobePathOverlay).coords}
+          pathPointLat={(p: unknown) => (p as [number, number])[1]}
+          pathPointLng={(p: unknown) => (p as [number, number])[0]}
+          pathPointAlt={(d: object) => (d as GlobePathOverlay).altitude ?? 0.015}
+          pathColor={(d: object) => (d as GlobePathOverlay).color ?? '#f59e0b'}
+          pathStroke={(d: object) => (d as GlobePathOverlay).stroke ?? 2.5}
+          pathDashLength={(d: object) => (d as GlobePathOverlay).dashLength ?? 0}
+          pathDashGap={(d: object) => (d as GlobePathOverlay).dashGap ?? 0}
+          pathLabel={(d: object) => (d as GlobePathOverlay).label ?? ''}
+          pathResolution={3}
           onGlobeReady={configureGlobe}
         />
       )}

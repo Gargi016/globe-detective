@@ -1,6 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import GlobeView from '../components/GlobeView';
-import type { GlobeViewHandle } from '../components/GlobeView';
+import type { GlobePathOverlay, GlobeViewHandle } from '../components/GlobeView';
 import ChangesPanel from '../components/history/ChangesPanel';
 import CoverageNotice from '../components/history/CoverageNotice';
 import EntityCard from '../components/history/EntityCard';
@@ -18,6 +18,7 @@ import { useHistoryService } from '../history/useHistoryService';
 import type { HistoricalExample } from '../history/examples';
 import type { Anchor, HistoricalFeature } from '../history/types';
 import { colorOf, keyOf, tooltipOf } from '../components/history/globeStyle';
+import { loadIndiaOfficialBoundary } from '../lib/countries';
 
 const DEFAULT_YEAR = 1960;
 const EMPTY: readonly HistoricalFeature[] = [];
@@ -60,7 +61,38 @@ export default function HistoryPage() {
   const [selectedGw, setSelectedGw] = useState<number | null>(() => parseGw(initial.get('gw')));
   const [tab, setTab] = useState<Tab>(() => (parseGw(initial.get('gw')) !== null ? 'selected' : 'changes'));
   const [activeExample, setActiveExample] = useState<string | null>(null);
+  const [indiaBoundary, setIndiaBoundary] = useState<[number, number][]>([]);
+  const [showIndiaOverlay, setShowIndiaOverlay] = useState<boolean>(true);
   const globeRef = useRef<GlobeViewHandle>(null);
+
+  // Load present-day official India boundary overlay for comparison throughout history.
+  useEffect(() => {
+    let cancelled = false;
+    loadIndiaOfficialBoundary()
+      .then((coords) => {
+        if (!cancelled) setIndiaBoundary(coords);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const pathOverlays = useMemo<GlobePathOverlay[]>(() => {
+    if (!showIndiaOverlay || indiaBoundary.length === 0) return [];
+    return [
+      {
+        id: 'india-official-boundary',
+        coords: indiaBoundary,
+        color: '#f59e0b',
+        stroke: 2.5,
+        altitude: 0.015,
+        dashLength: 0.35,
+        dashGap: 0.15,
+        label: `<div class="globe-tooltip"><strong>India's Official Claim (Present-Day)</strong><span>Survey of India boundary overlay · Includes PoK, Gilgit-Baltistan, Aksai Chin & Arunachal Pradesh</span></div>`,
+      },
+    ];
+  }, [showIndiaOverlay, indiaBoundary]);
 
   // Keep the slider responsive while a heavy snapshot is built.
   const shownYear = useDeferredValue(year);
@@ -222,6 +254,7 @@ export default function HistoryPage() {
               keyOf={keyOf}
               tooltipOf={tooltipOf}
               polygonColor={colorOf}
+              paths={pathOverlays}
               selectedKey={selectedKey}
               onSelect={handleSelect}
               overlay={overlay}
@@ -231,6 +264,8 @@ export default function HistoryPage() {
           <StatusLegend
             counts={snapshot?.covered ? snapshot.counts : null}
             undefinedBoundaryCount={snapshot?.covered ? snapshot.undefinedBoundaryCount : 0}
+            indiaOverlayVisible={showIndiaOverlay}
+            onToggleIndiaOverlay={() => setShowIndiaOverlay((v) => !v)}
           />
         </div>
 

@@ -13,9 +13,16 @@ export const STATUS_COLOR: Record<EntityStatus, string> = {
 export interface StatusLegendProps {
   counts: Record<EntityStatus, number> | null;
   undefinedBoundaryCount: number;
+  indiaOverlayVisible?: boolean;
+  onToggleIndiaOverlay?: () => void;
 }
 
-export default function StatusLegend({ counts, undefinedBoundaryCount }: StatusLegendProps) {
+export default function StatusLegend({
+  counts,
+  undefinedBoundaryCount,
+  indiaOverlayVisible = true,
+  onToggleIndiaOverlay,
+}: StatusLegendProps) {
   return (
     <div className="legend" aria-label="Map legend">
       <ul className="legend__list">
@@ -33,10 +40,27 @@ export default function StatusLegend({ counts, undefinedBoundaryCount }: StatusL
             <span className="legend__count">{undefinedBoundaryCount}</span>
           </li>
         )}
+        {onToggleIndiaOverlay && (
+          <li className="legend__item legend__item--india-overlay">
+            <button
+              type="button"
+              className={`legend__toggle-btn ${indiaOverlayVisible ? 'is-active' : ''}`}
+              onClick={onToggleIndiaOverlay}
+              title="Toggle India's Present-Day Official Claim Overlay"
+              aria-pressed={indiaOverlayVisible}
+              data-testid="toggle-india-overlay"
+            >
+              <span className="legend__swatch legend__swatch--india-overlay" aria-hidden="true" />
+              India claim (present-day)
+              <span className="legend__status-tag">{indiaOverlayVisible ? 'ON' : 'OFF'}</span>
+            </button>
+          </li>
+        )}
       </ul>
       <p className="legend__note">
-        Unshaded land has no polygon in CShapes on this date: it is not drawn, rather than guessed. The Earth
-        image underneath is modern.
+        Historical boundaries follow CShapes 2.0. The amber dashed line indicates India's present-day
+        official territorial claim (Survey of India standard) for historical comparison. Unshaded land
+        has no polygon in CShapes on this date.
       </p>
     </div>
   );
