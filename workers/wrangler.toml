@@ -1,0 +1,8 @@
+name = "globe-detective-api"
+main = "src/index.ts"
+compatibility_date = "2026-11-01"
+
+# Secrets required in Cloudflare Worker (set using: wrangler secret put <NAME>):
+# - FIREBASE_PROJECT_ID
+# - FIREBASE_CLIENT_EMAIL
+# - FIREBASE_PRIVATE_KEY

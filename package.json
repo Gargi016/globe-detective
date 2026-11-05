@@ -1,0 +1,53 @@
+{
+  "name": "globe-detective",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview",
+    "verify:firebase": "tsx scripts/verify-firebase.ts",
+    "verify:history": "tsx scripts/verify-history.ts",
+    "build:history": "node scripts/build-history-data.mjs",
+    "fetch:history": "bash scripts/fetch-cshapes.sh",
+    "verify:geometry": "node scripts/verify-geometry.mjs public/data/cshapes/cshapes-2.0-gw.simplified.topojson",
+    "verify:events": "tsx scripts/verify-events.ts",
+    "test": "vitest run",
+    "test:detective": "vitest run src/detective",
+    "test:e2e": "python3 e2e/run_all.py",
+    "verify": "npm run typecheck && npm test && npm run verify:history && npm run build"
+  },
+  "dependencies": {
+    "d3-geo": "^3.1.1",
+    "firebase": "^13.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-globe.gl": "^2.38.0",
+    "three": "^0.187.0",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  },
+  "devDependencies": {
+    "@types/d3-geo": "^3.1.1",
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
+    "@types/topojson-client": "^3.1.5",
+    "@types/topojson-specification": "^1.0.5",
+    "@vitejs/plugin-react": "^6.1.2",
+    "axe-core": "^4.14.0",
+    "mapshaper": "^0.7.101",
+    "topojson-simplify": "^3.0.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

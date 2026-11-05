@@ -1,0 +1,39 @@
+CShapes 2.0 — attribution and licence notice
+=============================================
+
+This folder contains a SIMPLIFIED derivative of the CShapes 2.0 dataset
+(file: cshapes-2.0-gw.simplified.topojson).
+
+Dataset
+  Schvitz, G., Girardin, L., Rüegger, S., Weidmann, N. B., Cederman, L.-E., &
+  Gleditsch, K. S. (2022). Mapping the International System, 1886–2019: The
+  CShapes 2.0 Dataset. Journal of Conflict Resolution, 66(1), 144–161.
+  https://doi.org/10.1177/00220027211013563
+  Data record: https://doi.org/10.3929/ethz-b-000487987
+  Project page: https://icr.ethz.ch/data/cshapes/
+
+Licence
+  The ETH Research Collection record for the dataset lists:
+  Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0); an earlier
+  review of the project page recorded CC BY-NC-SA 4.0. This app applies the STRICTER terms
+  (CC BY-NC-SA 4.0: attribution, non-commercial, share-alike). Original line:
+  https://creativecommons.org/licenses/by-nc/4.0/
+  => Attribution is required and COMMERCIAL USE IS NOT PERMITTED under that licence.
+  (The maintainers' R package "cshapes", through which this copy was obtained, is
+  separately declared GPL-2 | GPL-3 on CRAN.) Check the project page above before
+  redistributing or using this app commercially; the official page could not be
+  reached from the build environment, so the licence text there was not re-checked.
+
+Source of this copy
+  inst/extdata/cshapes_2_gw.topojson.xz from the CRAN package "cshapes" 2.0
+  (Weidmann, Schvitz & Girardin, 2021), via the GitHub mirror
+  https://github.com/cran/cshapes. State-system membership follows
+  Gleditsch & Ward (GW). Coverage: 1886-01-01 to 2019-12-31.
+
+Changes made (see scripts/build-history-data.mjs)
+  * Geometry generalised with Douglas-Peucker, 3 km tolerance, topology preserved
+    (shared borders stay shared). ~97% of rings kept; features smaller than about
+    3 km may be missing. A handful of microscopic (<70 km2) bow-ties may remain.
+  * Attributes reduced to those the app uses; area (km2) added, computed from the
+    ORIGINAL unsimplified geometry.
+  * No boundary has been added, moved by hand, or invented.

@@ -1,0 +1,78 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Auth and ownership helpers
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // User profile documents (/users/{userId})
+    // Strictly private to the owning user (protects email, exploration history, private stats).
+    // Public player names and emblem rankings are served via /leaderboards.
+    match /users/{userId} {
+      // 1. Only the owner can read their own profile (protects email and private data)
+      allow read: if isOwner(userId);
+
+      // 2. Initial creation permitted for owner; totalPoints must start at 0 if supplied
+      allow create: if isOwner(userId)
+        && (!('stats' in request.resource.data)
+            || !('totalPoints' in request.resource.data.stats)
+            || request.resource.data.stats.totalPoints == 0);
+
+      // 3. Updates allowed for profile fields (displayName, emblem, exploredYears);
+      // Client writes can NEVER modify or inflate totalPoints
+      allow update: if isOwner(userId)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['stats'])
+            || !('totalPoints' in request.resource.data.stats)
+            || (('totalPoints' in resource.data.stats) && request.resource.data.stats.totalPoints == resource.data.stats.totalPoints));
+
+      // 4. Owner can delete their account profile
+      allow delete: if isOwner(userId);
+
+      // User's saved investigations: private read and write to owner only
+      match /investigations/{invId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // User's unlocked achievements: private read and write to owner only
+      match /achievements/{badgeId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      // User's verified challenge attempts:
+      // Client has read access to their own past challenge history.
+      // WRITES ARE PROHIBITED: challenge attempts and points are recorded
+      // exclusively by the Cloudflare Worker edge backend using Google Service Account credentials.
+      match /challenges/{attemptId} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
+
+      // Daily challenge replay locks:
+      // Owner can check if they completed today's daily; writes prohibited to clients.
+      match /dailyDone/{dailyKey} {
+        allow read: if isOwner(userId);
+        allow write: if false;
+      }
+    }
+
+    // Leaderboards:
+    // Read-only for all clients (including guests).
+    // Direct client writes are strictly forbidden: all leaderboard entries are
+    // computed and updated server-side by the trusted Cloudflare Worker edge backend.
+    match /leaderboards/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Default deny-all fallback for any other path
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
