@@ -55,4 +55,36 @@ export const SRC = {
     label: 'Northern Rhodesia (Wikipedia)',
     url: 'https://en.wikipedia.org/wiki/Northern_Rhodesia',
   },
+  unMogip: {
+    label: 'UN Military Observer Group in India and Pakistan (UNMOGIP)',
+    url: 'https://peacekeeping.un.org/en/mission/unmogip',
+  },
+  simlaAgreement: {
+    label: 'Simla Agreement on Bilateral Relations (1972)',
+    url: 'https://peacemaker.un.org/in-pk-simlaagreement72',
+  },
+  unRes2758: {
+    label: 'UN General Assembly Resolution 2758 (XXVI) (1971)',
+    url: 'https://digitallibrary.un.org/record/192070',
+  },
+  unRes68262: {
+    label: 'UN General Assembly Resolution 68/262: Territorial integrity of Ukraine (2014)',
+    url: 'https://digitallibrary.un.org/record/767965',
+  },
+  unRes242: {
+    label: 'UN Security Council Resolution 242 (1967)',
+    url: 'https://digitallibrary.un.org/record/90297',
+  },
+  unRes6719: {
+    label: 'UN General Assembly Resolution 67/19: Status of Palestine in the UN (2012)',
+    url: 'https://digitallibrary.un.org/record/739947',
+  },
+  unWesternSahara: {
+    label: 'UN Non-Self-Governing Territories / MINURSO',
+    url: 'https://www.un.org/dppa/decolonization/en/nsgt/western-sahara',
+  },
+  unRes541: {
+    label: 'UN Security Council Resolution 541 (1983)',
+    url: 'https://digitallibrary.un.org/record/53544',
+  },
 } as const satisfies Record<string, SourceRef>;

@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/Cloudflare_Workers-Edge_API-F38020?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Cloudflare Workers">
   <img src="https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black" alt="Firebase">
   <img src="https://img.shields.io/badge/Netlify-Deployed-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" alt="Netlify">
-  <img src="https://img.shields.io/badge/Tests-232_Passed-brightgreen?style=for-the-badge" alt="Tests">
+  <img src="https://img.shields.io/badge/Tests-247_Passed-brightgreen?style=for-the-badge" alt="Tests">
 </p>
 
 <p align="center">
@@ -58,6 +58,22 @@ The system is deployed on a modern, ultra-low-latency **serverless edge architec
 - **🏅 Global Hall of Cartographers (Leaderboard):** Real-time All-Time, Weekly, and Monthly leaderboards backed by hardened Cloud Firestore rules and edge reconciliation.
 - **🔄 Seamless Cloud Synchronization & Guest Mode:** Play instantly as a guest without signing up. Sign in with Google or Email at any time to automatically reconcile and sync local achievements and challenge scores to the cloud.
 - **🎖️ Collectible Detective Badges:** Earn 12 unique detective badges (e.g., *Centennial Sleuth*, *Iron Curtain Whiz*, *Perfectionist*) tracking your case runs, streaks, and historical milestones.
+- **🗺️ Territorial Accuracy & Neutrality Notes:** Integrated contextual caveats for disputed territories (Kashmir, Taiwan, Crimea, Palestine, Western Sahara, Cyprus) distinguishing de facto administration from international recognition and competing claims.
+
+---
+
+## 🗺️ Territorial Accuracy & Disputed Borders
+
+Globe Detective relies on **CShapes 2.0** as its peer-reviewed historical baseline. Because CShapes codes the international state system primarily based on *de facto* effective territorial control, the project includes explicit contextual notes in compliance with international legal frameworks:
+
+| Region / Dispute | CShapes GW Code | Coding Reality vs. International Recognition | Key Sources & Treaties |
+| :--- | :--- | :--- | :--- |
+| **Kashmir** | `GW 750` (India) / `GW 770` (Pakistan) | Drawn along the 1949 Ceasefire Line / 1972 Line of Control (LoC). Explains India's constitutional claim over the entire former princely state and Pakistan's claim pending a UN plebiscite. | UNMOGIP, Simla Agreement (1972) |
+| **Taiwan** | `GW 713` (Taiwan) / `GW 710` (China) | Coded as independent from 1949-12-08 reflecting de facto governance, separate military and institutions, contextualized with PRC's "One China" principle and UN GA Res 2758 (1971). | UN GA Res 2758 (XXVI) |
+| **Crimea** | `GW 365` (Russia) / `GW 369` (Ukraine) | Shifts from Ukraine to Russia on 2014-03-18 tracking physical control, while noting UN GA Res 68/262 affirming Ukrainian territorial integrity under international law. | UN GA Res 68/262 (2014) |
+| **Palestine / Occupied Territories** | `GW 666` (Israel) | Post-1967 borders aggregate the West Bank, Gaza, and Golan Heights into Israel; notes UN SC Res 242/497/2334 and UN GA Res 67/19 recognizing the State of Palestine. | UNSC Res 242, UN GA Res 67/19 |
+| **Western Sahara** | `GW 600` (Morocco) | Entire area aggregated into Morocco post-1975/1979; notes UN Non-Self-Governing Territory status, MINURSO, and Polisario Front's SADR Free Zone east of the Berm. | UN MINURSO, Madrid Accords |
+| **Cyprus** | `GW 352` (Cyprus) | Coded as undivided island; notes 1974 de facto partition, the self-declared TRNC (1983), UNSC Res 541, the UN Buffer Zone (Green Line), and British SBAs. | UNSC Res 541 (1983) |
 
 ---
 
@@ -162,7 +178,7 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 ```bash
 npm test
 ```
-Runs 232 unit, integration, and security rule tests via Vitest.
+Runs 247 unit, integration, and security rule tests via Vitest.
 
 ### 7. Production Build
 ```bash

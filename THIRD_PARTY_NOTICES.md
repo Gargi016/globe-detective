@@ -11,6 +11,7 @@ check each source for the current terms.
 | **Natural Earth** 1:110m countries, via the `world-atlas` package | `public/data/countries-110m.json` | Natural Earth: public domain. `world-atlas`: ISC. |
 | **Earth imagery** (`earth-blue-marble.jpg`) and relief map (`earth-topology.png`) | `public/img/` (copied from the `three-globe` package's `example/img`) | Distributed with `three-globe` (MIT). The imagery appears to be NASA Blue Marble material, which NASA generally publishes without copyright restriction; the package does not state the provenance, so verify before any commercial use. |
 | Historical event, name and clue tables | `src/detective/historicalEvents.ts`, `src/history/nameHistory.ts`, `src/history/examples.ts` | Written for this project, citing the reference links stored beside each entry. |
+| Territorial accuracy & disputed area notes | `src/history/datasetNotes.ts`, `src/history/sources.ts` | Contextual notes documenting de facto control vs international recognition and competing claims across Kashmir, Taiwan, Crimea, Palestine, Western Sahara, and Cyprus, citing UN resolutions (UNMOGIP, UNSC Res 242/541, UN GA Res 2758/6719/68262) and bilateral treaties (Simla Agreement 1972). |
 
 **Consequence:** because CShapes is non-commercial, deployments of this app must be non-commercial (no ads, paywall or paid plan built on it).
 
