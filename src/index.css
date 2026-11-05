@@ -350,6 +350,99 @@ code {
   opacity: 0.75;
 }
 
+/* ---------- Map Perspective Toggle ---------- */
+
+.perspective-toggle {
+  margin: 1rem auto 0;
+  max-width: 38rem;
+  padding: 0.75rem 1.1rem;
+  background: rgba(6, 13, 31, 0.75);
+  border: 1px solid var(--gold-faint);
+  border-radius: 16px;
+  backdrop-filter: blur(10px);
+  text-align: center;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.perspective-toggle:hover {
+  border-color: var(--gold-soft);
+}
+
+.perspective-toggle__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.perspective-toggle__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.perspective-toggle__group {
+  display: inline-flex;
+  padding: 3px;
+  background: rgba(4, 9, 20, 0.85);
+  border: 1px solid var(--gold-faint);
+  border-radius: 999px;
+  gap: 3px;
+}
+
+.perspective-toggle__btn {
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.perspective-toggle__btn:hover:not(.perspective-toggle__btn--active) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.perspective-toggle__btn--active {
+  color: var(--navy-900);
+  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(212, 175, 95, 0.35);
+}
+
+.perspective-toggle__btn:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 2px;
+}
+
+.perspective-toggle__notice {
+  margin: 0.55rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text-dim);
+  border-top: 1px solid rgba(212, 175, 95, 0.12);
+  padding-top: 0.5rem;
+}
+
+.perspective-toggle__notice strong {
+  color: var(--gold-bright);
+  font-weight: 600;
+}
+
+.perspective-toggle__notice em {
+  font-style: italic;
+  color: rgba(255, 215, 130, 0.9);
+}
+
 /* ---------- Explorer: globe + info panel ---------- */
 
 .explorer {
